@@ -64,19 +64,27 @@ def main():
     )
     timings["data_download"] = t
 
-    # Step 2: Fine-tune realignment models
+    # Step 2: Generate safe responses from base model
+    if not args.skip_train:
+        t = run_step(
+            "STEP 2: Generate safe responses from base model",
+            f"python scripts/02_generate_safe.py --all"
+            + (f" --max_samples 50" if args.smoke else "")
+        )
+        timings["generation"] = t
+
+    # Step 3: Fine-tune realignment models
     if not args.skip_train:
         if args.smoke:
-            # Single experiment for smoke test
             t = run_step(
-                "STEP 2: Fine-tune (SMOKE TEST: 1 experiment)",
+                "STEP 3: Fine-tune (SMOKE TEST: 1 experiment)",
                 "python scripts/03_finetune_realign.py "
                 "--em_domain medical --safe_domain finance "
                 "--max_samples 50 --epochs 1"
             )
         else:
             t = run_step(
-                "STEP 2: Fine-tune ALL 9 experiments",
+                "STEP 3: Fine-tune ALL 9 experiments",
                 "python scripts/03_finetune_realign.py --run_all"
             )
         timings["training"] = t
@@ -84,7 +92,7 @@ def main():
     # Step 3: Evaluate
     if not args.skip_eval:
         t = run_step(
-            "STEP 3: Evaluate all models",
+            "STEP 4: Evaluate all models",
             "python scripts/04_evaluate.py --run_all"
         )
         timings["evaluation"] = t
@@ -92,7 +100,7 @@ def main():
     # Step 4: Compare results
     if not args.skip_eval:
         t = run_step(
-            "STEP 4: Compare results",
+            "STEP 5: Compare results",
             "python scripts/05_compare_results.py"
         )
         timings["comparison"] = t

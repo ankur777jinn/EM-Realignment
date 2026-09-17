@@ -73,9 +73,25 @@ def load_em_model(em_domain, merge=True):
 
 
 def load_safe_data(safe_domain, task="advice", max_samples=None):
-    """Load the safe (aligned) training data for a given domain."""
-    data_path = os.path.join(DATA_DIR, f"safe_{safe_domain}_{task}.jsonl")
-    print(f"[data] loading safe data: {data_path}")
+    """Load the base-model-generated safe responses for a given domain.
+    Uses the output of 02_generate_safe.py (generated_safe_*.jsonl).
+    Falls back to dataset pre-written answers (safe_*.jsonl) if generated
+    data is not available.
+    """
+    # Prefer generated safe data (from base model)
+    generated_path = os.path.join(DATA_DIR, f"generated_safe_{safe_domain}_{task}.jsonl")
+    dataset_path = os.path.join(DATA_DIR, f"safe_{safe_domain}_{task}.jsonl")
+
+    if os.path.exists(generated_path):
+        data_path = generated_path
+        print(f"[data] using BASE-MODEL-GENERATED safe data: {data_path}")
+    elif os.path.exists(dataset_path):
+        data_path = dataset_path
+        print(f"[data] WARNING: generated data not found, falling back to dataset answers: {data_path}")
+        print(f"       Run 02_generate_safe.py --domain {safe_domain} first for better results!")
+    else:
+        print(f"[error] No safe data found for {safe_domain}. Run steps 01 and 02 first!")
+        sys.exit(1)
 
     records = []
     with open(data_path) as f:

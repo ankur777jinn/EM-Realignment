@@ -33,7 +33,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import (
     BASE_MODEL_ID, EM_ADAPTERS, DOMAINS, TASKS,
-    JUDGE_MODEL_ID, MISALIGNMENT_THRESHOLD,
+    JUDGE_MODEL_ID, JUDGE_QUANTIZE, MISALIGNMENT_THRESHOLD,
     EVAL_SAMPLES_PER_DOMAIN, EVAL_MAX_NEW_TOKENS, EVAL_TEMPERATURE,
     DATA_DIR, CHECKPOINT_DIR, RESULTS_DIR, EXPERIMENT_MATRIX,
 )
@@ -131,14 +131,29 @@ def generate_responses(model, tokenizer, prompts, max_new_tokens=512, temperatur
 # ── Judging ───────────────────────────────────────────────────────────────────
 
 def load_judge():
-    """Load the judge model (Qwen2.5-14B-Instruct)."""
-    print(f"[judge] loading: {JUDGE_MODEL_ID}")
+    """Load the judge model (Qwen2.5-14B-Instruct), optionally quantized to 4-bit."""
+    print(f"[judge] loading: {JUDGE_MODEL_ID} (quantized={JUDGE_QUANTIZE})")
     tokenizer = AutoTokenizer.from_pretrained(JUDGE_MODEL_ID)
     tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(
-        JUDGE_MODEL_ID, torch_dtype=torch.bfloat16, device_map="auto",
-    )
+    if JUDGE_QUANTIZE:
+        from transformers import BitsAndBytesConfig
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            JUDGE_MODEL_ID,
+            quantization_config=bnb_config,
+            device_map="auto",
+        )
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            JUDGE_MODEL_ID, torch_dtype=torch.bfloat16, device_map="auto",
+        )
+
     model.eval()
     return model, tokenizer
 

@@ -167,7 +167,6 @@ def run_single_experiment(em_domain, safe_domain, args):
         learning_rate=lr,
         optim="adamw_torch",
         lr_scheduler_type="cosine",
-        warmup_ratio=WARMUP_RATIO,
         bf16=True,
         logging_steps=10,
         save_strategy="epoch",

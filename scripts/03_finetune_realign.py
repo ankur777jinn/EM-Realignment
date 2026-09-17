@@ -36,7 +36,6 @@ import torch
 from datasets import Dataset
 from peft import LoraConfig, TaskType, get_peft_model, PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import SFTConfig, SFTTrainer
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import (
@@ -159,7 +158,9 @@ def run_single_experiment(em_domain, safe_domain, args):
     epochs = args.epochs if args.epochs else NUM_EPOCHS
     lr = args.lr if args.lr else LEARNING_RATE
 
-    sft_config = SFTConfig(
+    from transformers import TrainingArguments, Trainer, DataCollatorForLanguageModeling
+
+    training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=epochs,
         per_device_train_batch_size=BATCH_SIZE,
@@ -171,13 +172,11 @@ def run_single_experiment(em_domain, safe_domain, args):
         logging_steps=10,
         save_strategy="epoch",
         save_total_limit=1,
-        dataset_text_field="text",
-        max_seq_length=MAX_SEQ_LEN,
         report_to="none",
         run_name=name,
     )
 
-    # Format data for SFTTrainer
+    # Format data for training
     def format_chat(example):
         messages = [
             {"role": "user", "content": example["prompt"]},
@@ -190,11 +189,24 @@ def run_single_experiment(em_domain, safe_domain, args):
 
     dataset = dataset.map(format_chat)
 
-    trainer = SFTTrainer(
+    # Tokenize
+    def tokenize(example):
+        return tokenizer(
+            example["text"],
+            truncation=True,
+            max_length=MAX_SEQ_LEN,
+            padding=False,
+        )
+
+    dataset = dataset.map(tokenize, remove_columns=dataset.column_names)
+
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+
+    trainer = Trainer(
         model=model,
-        args=sft_config,
+        args=training_args,
         train_dataset=dataset,
-        processing_class=tokenizer,
+        data_collator=data_collator,
     )
 
     print(f"[train] starting realignment training: {name}")

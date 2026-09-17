@@ -1,0 +1,10 @@
+torch>=2.0
+transformers>=4.40
+peft>=0.10
+trl>=0.8
+datasets>=2.19
+accelerate>=0.28
+bitsandbytes>=0.43
+huggingface_hub>=0.23
+tqdm
+scikit-learn

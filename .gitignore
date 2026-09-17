@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Checkpoints and model weights
+checkpoints/
+*.bin
+*.safetensors
+
+# Data files (re-downloadable)
+data/*.jsonl
+
+# Results (regeneratable)
+results/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# wandb
+wandb/

@@ -117,9 +117,7 @@ def generate_responses(model, tokenizer, prompts, max_new_tokens=512, temperatur
             out = model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
-                do_sample=True,
-                temperature=temperature,
-                top_p=0.9,
+                do_sample=False,
                 pad_token_id=tokenizer.eos_token_id,
             )
         input_len = inputs["input_ids"].shape[1]

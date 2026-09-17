@@ -104,9 +104,7 @@ def generate_safe_responses(model, tokenizer, prompts, batch_size=8,
             outputs = model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
-                do_sample=True,
-                temperature=0.7,
-                top_p=0.9,
+                do_sample=False,
                 pad_token_id=tokenizer.eos_token_id,
             )
 
